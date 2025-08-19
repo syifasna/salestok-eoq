@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('biaya_penyimpanan', 10, 2);
             $table->integer('eoq_result');
             $table->integer('rop');
-            $table->timestamp('tanggal_hitung');
+            $table->date('tanggal_hitung');
             $table->timestamps();
         });
     }
