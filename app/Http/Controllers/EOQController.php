@@ -28,10 +28,8 @@ class EOQController extends Controller
         $bahan = BahanBaku::findOrFail($bahan_baku_id);
         $tahun = Carbon::now()->year;
 
-        /**
-         * 1. Hitung Permintaan Tahunan (D)
-         *    Dari total penjualan produk, dikonversi ke kebutuhan bahan baku
-         */
+        //1. Hitung Permintaan Tahunan (D)
+        //Dari total penjualan produk, dikonversi ke kebutuhan bahan baku
         $total_pemakaian = PenjualanDetail::whereYear('penjualan_detail.created_at', $tahun)
             ->with('produk.bahanBaku')
             ->get()
@@ -44,21 +42,15 @@ class EOQController extends Controller
 
         $D = $total_pemakaian;
 
-        /**
-         * 2. Biaya Pemesanan (S)
-         *    Hardcore fixed Rp 100.000 per order
-         */
-        $S = 100000;
+        //2. Biaya Pemesanan (S)
+        //Hardcore fixed Rp 20.000 per order
+        $S = 20000;
 
-        /**
-         * 3. Biaya Penyimpanan (H)
-         *    Misalnya 10% dari harga/unit
-         */
+        //3. Biaya Penyimpanan (H)
+        //Misalnya 10% dari harga/unit
         $H = $bahan->harga * 0.1;
 
-        /**
-         * 4. Lead Time (rata-rata selisih pesan - datang)
-         */
+        //4. Lead Time (rata-rata selisih pesan - datang)
         $lead_time = DB::table('pembelian_detail')
             ->join('pembelian', 'pembelian.id_pembelian', '=', 'pembelian_detail.id_pembelian')
             ->where('pembelian_detail.id_bahan_baku', $bahan->id)
@@ -67,19 +59,13 @@ class EOQController extends Controller
 
         $pemakaian_harian = $D > 0 ? ($D / 365) : 0;
 
-        /**
-         * 5. Rumus EOQ
-         */
+        //5. Rumus EOQ
         $EOQ = $H > 0 ? sqrt((2 * $D * $S) / $H) : 0;
 
-        /**
-         * 6. Reorder Point (ROP)
-         */
+        //6. Reorder Point (ROP)
         $ROP = $lead_time * $pemakaian_harian;
 
-        /**
-         * 7. Simpan hasil ke DB
-         */
+        //7. Simpan hasil ke DB
         Eoq::create([
             'bahan_baku_id'     => $bahan->id,
             'permintaan_tahunan' => $D,

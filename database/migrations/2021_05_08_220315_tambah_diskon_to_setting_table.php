@@ -16,7 +16,7 @@ class TambahDiskonToSettingTable extends Migration
         Schema::table('setting', function (Blueprint $table) {
             $table->smallInteger('diskon')
                   ->default(0)
-                  ->after('tipe_nota');
+                  ->after('tipe_nota')->nullable();
         });
     }
 

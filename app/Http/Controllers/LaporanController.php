@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pembelian;
 use App\Models\Pengeluaran;
 use App\Models\Penjualan;
+use App\Models\PenjualanDetail;
 use Illuminate\Http\Request;
 use PDF;
 
@@ -26,24 +27,35 @@ class LaporanController extends Controller
     public function getData($awal, $akhir)
     {
         $no = 1;
-        $data = array();
-        $pendapatan = 0;
+        $data = [];
         $total_pendapatan = 0;
 
         while (strtotime($awal) <= strtotime($akhir)) {
             $tanggal = $awal;
             $awal = date('Y-m-d', strtotime("+1 day", strtotime($awal)));
 
-            $total_penjualan = Penjualan::where('created_at', 'LIKE', "%$tanggal%")->sum('bayar');
-            $total_pembelian = Pembelian::where('created_at', 'LIKE', "%$tanggal%")->sum('bayar');
-            $total_pengeluaran = Pengeluaran::where('created_at', 'LIKE', "%$tanggal%")->sum('nominal');
+            $total_penjualan = Penjualan::whereDate('created_at', $tanggal)->sum('bayar');
+            $total_pembelian = Pembelian::whereDate('created_at', $tanggal)->sum('bayar');
+            $total_pengeluaran = Pengeluaran::whereDate('created_at', $tanggal)->sum('nominal');
 
             $pendapatan = $total_penjualan - $total_pembelian - $total_pengeluaran;
             $total_pendapatan += $pendapatan;
 
-            $row = array();
+            // 🔹 ambil produk-produk yang terjual hari itu
+            $produkList = PenjualanDetail::with('produk')
+                ->whereHas('penjualan', function ($q) use ($tanggal) {
+                    $q->whereDate('created_at', $tanggal);
+                })
+                ->get()
+                ->map(function ($detail) {
+                    return $detail->produk->nama_produk ?? '';
+                })
+                ->implode(', ');
+
+            $row = [];
             $row['DT_RowIndex'] = $no++;
             $row['tanggal'] = tanggal_indonesia($tanggal, false);
+            $row['produk'] = $produkList; // 👈 nama produk ditambahkan
             $row['penjualan'] = format_uang($total_penjualan);
             $row['pembelian'] = format_uang($total_pembelian);
             $row['pengeluaran'] = format_uang($total_pengeluaran);
@@ -55,6 +67,7 @@ class LaporanController extends Controller
         $data[] = [
             'DT_RowIndex' => '',
             'tanggal' => '',
+            'produk' => '',
             'penjualan' => '',
             'pembelian' => '',
             'pengeluaran' => 'Total Pendapatan',
@@ -78,7 +91,7 @@ class LaporanController extends Controller
         $data = $this->getData($awal, $akhir);
         $pdf  = PDF::loadView('laporan.pdf', compact('awal', 'akhir', 'data'));
         $pdf->setPaper('a4', 'potrait');
-        
-        return $pdf->stream('Laporan-pendapatan-'. date('Y-m-d-his') .'.pdf');
+
+        return $pdf->stream('Laporan-pendapatan-' . date('Y-m-d-his') . '.pdf');
     }
 }

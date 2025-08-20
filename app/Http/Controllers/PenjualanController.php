@@ -35,12 +35,12 @@ class PenjualanController extends Controller
             ->addColumn('tanggal', function ($penjualan) {
                 return tanggal_indonesia($penjualan->created_at, false);
             })
-            ->addColumn('kode_member', function ($penjualan) {
-                $member = $penjualan->member->kode_member ?? '';
-                return '<span class="label label-success">' . $member . '</spa>';
-            })
-            ->editColumn('diskon', function ($penjualan) {
-                return $penjualan->diskon . '%';
+            ->addColumn('nama_produk', function ($penjualan) {
+                $produkList = $penjualan->detail->map(function ($detail) {
+                    return $detail->produk->nama_produk ?? '';
+                })->implode(', '); 
+
+                return $produkList;
             })
             ->editColumn('kasir', function ($penjualan) {
                 return $penjualan->user->name ?? '';
@@ -53,7 +53,7 @@ class PenjualanController extends Controller
                 </div>
                 ';
             })
-            ->rawColumns(['aksi', 'kode_member'])
+            ->rawColumns(['aksi', 'nama_produk'])
             ->make(true);
     }
 
