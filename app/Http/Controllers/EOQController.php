@@ -44,11 +44,11 @@ class EOQController extends Controller
 
         //2. Biaya Pemesanan (S)
         //Hardcore fixed Rp 20.000 per order
-        $S = 20000;
+        $S = 25000;
 
         //3. Biaya Penyimpanan (H)
         //Misalnya 10% dari harga/unit
-        $H = $bahan->harga * 0.1;
+        $H = $bahan->harga * 0.25;
 
         //4. Lead Time (rata-rata selisih pesan - datang)
         $lead_time = DB::table('pembelian_detail')
@@ -57,7 +57,7 @@ class EOQController extends Controller
             ->whereYear('pembelian.created_at', $tahun)
             ->avg(DB::raw('DATEDIFF(pembelian.updated_at, pembelian.created_at)')) ?? 7;
 
-        $pemakaian_harian = $D > 0 ? ($D / 365) : 0;
+        $pemakaian_harian = $D > 0 ? ($D / 300) : 0;
 
         //5. Rumus EOQ
         $EOQ = $H > 0 ? sqrt((2 * $D * $S) / $H) : 0;

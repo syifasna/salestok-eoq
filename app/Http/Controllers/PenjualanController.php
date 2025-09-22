@@ -24,13 +24,13 @@ class PenjualanController extends Controller
             ->of($penjualan)
             ->addIndexColumn()
             ->addColumn('total_item', function ($penjualan) {
-                return format_uang($penjualan->total_item);
+                return $penjualan->total_item;
             })
             ->addColumn('total_harga', function ($penjualan) {
-                return 'Rp. ' . format_uang($penjualan->total_harga);
+                return format_uang($penjualan->total_harga);
             })
             ->addColumn('bayar', function ($penjualan) {
-                return 'Rp. ' . format_uang($penjualan->bayar);
+                return format_uang($penjualan->bayar);
             })
             ->addColumn('tanggal', function ($penjualan) {
                 return tanggal_indonesia($penjualan->created_at, false);
