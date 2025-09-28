@@ -14,7 +14,10 @@
         <form action="{{ route('login') }}" method="post" class="form-login">
             @csrf
             <div class="form-group has-feedback @error('email') has-error @enderror">
-                <input type="email" name="email" class="form-control" placeholder="Email" required value="{{ old('email') }}" autofocus>
+                <input type="email" name="email" class="form-control" placeholder="Email"
+                    required value="{{ old('email') }}" autofocus
+                    oninvalid="this.setCustomValidity('Alamat email harus memiliki symbol @')"
+                    oninput="this.setCustomValidity('')">
                 <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
                 @error('email')
                     <span class="help-block">{{ $message }}</span>

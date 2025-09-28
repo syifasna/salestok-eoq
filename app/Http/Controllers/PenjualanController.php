@@ -121,13 +121,13 @@ class PenjualanController extends Controller
                 return $detail->produk->nama_produk;
             })
             ->addColumn('harga_jual', function ($detail) {
-                return 'Rp. ' . format_uang($detail->harga_jual);
+                return format_uang($detail->harga_jual);
             })
             ->addColumn('jumlah', function ($detail) {
                 return format_uang($detail->jumlah);
             })
             ->addColumn('subtotal', function ($detail) {
-                return 'Rp. ' . format_uang($detail->subtotal);
+                return format_uang($detail->subtotal);
             })
             ->rawColumns(['kode_produk'])
             ->make(true);

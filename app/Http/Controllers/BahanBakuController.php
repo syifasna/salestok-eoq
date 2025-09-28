@@ -24,6 +24,9 @@ class BahanBakuController extends Controller
         return datatables()
             ->of($bahanBaku)
             ->addIndexColumn()
+            ->addColumn('harga', function ($bahanBaku) {
+                return format_uang($bahanBaku->harga);
+            })
             ->addColumn('aksi', function ($bahanBaku) {
                 return '
                 <div class="btn-group">
@@ -32,7 +35,7 @@ class BahanBakuController extends Controller
                 </div>
                 ';
             })
-            ->rawColumns(['aksi'])
+            ->rawColumns(['aksi', 'harga'])
             ->make(true);
     }
 

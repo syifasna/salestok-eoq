@@ -31,16 +31,21 @@ class EOQController extends Controller
         //1. Hitung Permintaan Tahunan (D)
         //Dari total penjualan produk, dikonversi ke kebutuhan bahan baku
         $total_pemakaian = PenjualanDetail::whereYear('penjualan_detail.created_at', $tahun)
-            ->with('produk.bahanBaku')
+            ->with(['produk.bahanBaku' => function ($q) use ($bahan) {
+                $q->where('bahan_bakus.id', $bahan->id);
+            }])
             ->get()
-            ->flatMap(function ($detail) {
-                return $detail->produk->bahanBaku->map(function ($bb) use ($detail) {
-                    return $bb->pivot->jumlah * $detail->jumlah;
-                });
+            ->flatMap(function ($detail) use ($bahan) {
+                return $detail->produk->bahanBaku
+                    ->where('id', $bahan->id)
+                    ->map(function ($bb) use ($detail) {
+                        return $bb->pivot->jumlah * $detail->jumlah;
+                    });
             })
             ->sum();
 
         $D = $total_pemakaian;
+
 
         //2. Biaya Pemesanan (S)
         //Hardcore fixed Rp 20.000 per order

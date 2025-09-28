@@ -292,15 +292,15 @@
 
         $.get(`{{ url('/transaksi/loadform') }}/${diskon}/${$('.total').text()}/${diterima}`)
             .done(response => {
-                $('#totalrp').val('Rp. '+ response.totalrp);
-                $('#bayarrp').val('Rp. '+ response.bayarrp);
+                $('#totalrp').val(response.totalrp);
+                $('#bayarrp').val(response.bayarrp);
                 $('#bayar').val(response.bayar);
-                $('.tampil-bayar').text('Bayar: Rp. '+ response.bayarrp);
+                $('.tampil-bayar').text('Bayar: '+ response.bayarrp);
                 $('.tampil-terbilang').text(response.terbilang);
 
-                $('#kembali').val('Rp.'+ response.kembalirp);
+                $('#kembali').val(response.kembalirp);
                 if ($('#diterima').val() != 0) {
-                    $('.tampil-bayar').text('Kembali: Rp. '+ response.kembalirp);
+                    $('.tampil-bayar').text('Kembali: '+ response.kembalirp);
                     $('.tampil-terbilang').text(response.kembali_terbilang);
                 }
             })

@@ -84,51 +84,50 @@ class ProdukController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-{
-    // 1. Validasi input
-    $request->validate([
-        'nama_produk'  => 'required|unique:produk,nama_produk',
-        'id_kategori'  => 'required|exists:kategori,id_kategori', // fix disini
-        'merk'         => 'nullable|string',
-        'harga_beli'   => 'required|integer',
-        'harga_jual'   => 'required|integer',
-        'diskon'       => 'nullable|integer',
-        'stok'         => 'required|integer',
-        'bahan_baku'   => 'nullable|array',
-        'bahan_baku.*.id'     => 'nullable|exists:bahan_bakus,id',
-        'bahan_baku.*.jumlah' => 'nullable|integer|min:1',
-    ]);
+    {
+        // 1. Validasi input
+        $request->validate([
+            'nama_produk'  => 'required|unique:produk,nama_produk',
+            'id_kategori'  => 'required|exists:kategori,id_kategori', // fix disini
+            'merk'         => 'nullable|string',
+            'harga_beli'   => 'required|integer',
+            'harga_jual'   => 'required|integer',
+            'diskon'       => 'nullable|integer',
+            'stok'         => 'required|integer',
+            'bahan_baku'   => 'nullable|array',
+            'bahan_baku.*.id'     => 'nullable|exists:bahan_bakus,id',
+            'bahan_baku.*.jumlah' => 'nullable|integer|min:1',
+        ]);
 
-    // 2. Generate kode produk otomatis
-    $lastProduk   = Produk::latest('id_produk')->first();
-    $kodeProduk   = 'P' . str_pad(($lastProduk ? $lastProduk->id_produk + 1 : 1), 6, '0', STR_PAD_LEFT);
+        // 2. Generate kode produk otomatis
+        $lastProduk   = Produk::latest('id_produk')->first();
+        $kodeProduk   = 'P' . str_pad(($lastProduk ? $lastProduk->id_produk + 1 : 1), 6, '0', STR_PAD_LEFT);
 
-    // 3. Simpan produk
-    $produk = Produk::create([
-        'nama_produk' => $request->nama_produk,
-        'id_kategori' => $request->id_kategori,
-        'merk'        => $request->merk,
-        'harga_beli'  => $request->harga_beli,
-        'harga_jual'  => $request->harga_jual,
-        'diskon'      => $request->diskon ?? 0,
-        'stok'        => $request->stok,
-        'kode_produk' => $kodeProduk,
-    ]);
+        // 3. Simpan produk
+        $produk = Produk::create([
+            'nama_produk' => $request->nama_produk,
+            'id_kategori' => $request->id_kategori,
+            'merk'        => $request->merk,
+            'harga_beli'  => $request->harga_beli,
+            'harga_jual'  => $request->harga_jual,
+            'diskon'      => $request->diskon ?? 0,
+            'stok'        => $request->stok,
+            'kode_produk' => $kodeProduk,
+        ]);
 
-    // 4. Simpan bahan baku ke pivot (jika ada)
-    if ($request->has('bahan_baku')) {
-        foreach ($request->bahan_baku as $item) {
-            if (!empty($item['id']) && !empty($item['jumlah'])) {
-                $produk->bahanBaku()->attach($item['id'], [
-                    'jumlah' => $item['jumlah'],
-                ]);
+        // 4. Simpan bahan baku ke pivot (jika ada)
+        if ($request->has('bahan_baku')) {
+            foreach ($request->bahan_baku as $item) {
+                if (!empty($item['id']) && !empty($item['jumlah'])) {
+                    $produk->bahanBaku()->attach($item['id'], [
+                        'jumlah' => $item['jumlah'],
+                    ]);
+                }
             }
         }
+
+        return redirect()->route('produk.index')->with('success', 'Produk berhasil ditambahkan!');
     }
-
-    return redirect()->route('produk.index')->with('success', 'Produk berhasil ditambahkan!');
-}
-
 
     /**
      * Display the specified resource.
@@ -163,10 +162,44 @@ class ProdukController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $produk = Produk::find($id);
-        $produk->update($request->all());
+        $produk = Produk::findOrFail($id); // otomatis 404 jika tidak ditemukan
 
-        return response()->json('Data berhasil disimpan', 200);
+        $request->validate([
+            'nama_produk'  => 'required|unique:produk,nama_produk,' . $id . ',id_produk',
+            'id_kategori'  => 'required|exists:kategori,id_kategori',
+            'merk'         => 'nullable|string',
+            'harga_beli'   => 'required|integer',
+            'harga_jual'   => 'required|integer',
+            'diskon'       => 'nullable|integer',
+            'stok'         => 'required|integer',
+            'bahan_baku'   => 'nullable|array',
+            'bahan_baku.*.id'     => 'nullable|exists:bahan_bakus,id',
+            'bahan_baku.*.jumlah' => 'nullable|integer|min:1',
+        ]);
+
+        $produk->update([
+            'nama_produk' => $request->nama_produk,
+            'id_kategori' => $request->id_kategori,
+            'merk'        => $request->merk,
+            'harga_beli'  => $request->harga_beli,
+            'harga_jual'  => $request->harga_jual,
+            'diskon'      => $request->diskon ?? 0,
+            'stok'        => $request->stok,
+        ]);
+
+        $produk->bahanBaku()->detach();
+
+        if ($request->has('bahan_baku')) {
+            foreach ($request->bahan_baku as $item) {
+                if (!empty($item['id']) && !empty($item['jumlah'])) {
+                    $produk->bahanBaku()->attach($item['id'], [
+                        'jumlah' => $item['jumlah'],
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->route('produk.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
     /**
